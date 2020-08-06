@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="image_pkg" type="opencv_test_node" name="image_publisher"/>
+    <node pkg="image_pkg" type="image_sub" name="image_listener" output="screen"></node>
+    ...
+</launch>
