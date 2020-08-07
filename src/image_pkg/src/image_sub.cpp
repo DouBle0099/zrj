@@ -10,16 +10,6 @@
 #include "std_msgs/String.h"
 #include <boost/thread.hpp>
 
-void Thread_Function()
-{
-    while(true)
-    {
-        ROS_INFO("Threads Has Been Started!");
-    }
- 
-}
-
-
 class PictureDealer
 {
     public: 
@@ -28,6 +18,7 @@ class PictureDealer
         {
             pub_ = it.advertise/*<sensor_msgs::ImagePtr>*/("SpinOutImage", 1);    
             sub_ = it.subscribe("OutImage", 1, &PictureDealer::imageCallback, this);
+            sub_1 = it.subscribe("OutImage", 1, &PictureDealer::imageCallback1, this);
         }
         void imageCallback(const sensor_msgs::ImageConstPtr& msg)
         {
@@ -46,18 +37,23 @@ class PictureDealer
                 pub_.publish(msg);
 	            cv::imshow("dst",dst);
                 cv::waitKey(50);
-                //ROS_INFO("CallBack Has Been Started");
+                ROS_INFO("Thread1 Has Been Started");
             }
                 catch (cv_bridge::Exception& e)
             {
                 ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
             }
         }
+        void imageCallback1(const sensor_msgs::ImageConstPtr& msg)
+        {
+            ROS_INFO("Thread2 Has Been Started");
+        }
     private:  
        ros::NodeHandle n_; 
        image_transport::ImageTransport it; 
        image_transport::Publisher pub_;  
-       image_transport::Subscriber sub_;  
+       image_transport::Subscriber sub_; 
+       image_transport::Subscriber sub_1;
 
 };
 int main(int argc, char **argv)  
@@ -66,9 +62,21 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "image_listener");   
     //Create an object of class SubscribeAndPublish that will take care of everything  
     PictureDealer picturedeal; 
-    boost::thread server(Thread_Function);   
-    ros::spin();  
-      
+    
+    // ros::MultiThreadedSpinner s(4);   
+    // ros::spin(s); 
+    // ros::AsyncSpinner spinner(2); // Use 2 threads
+    // spinner.start();
+    // ros::waitForShutdown();
+    ros::AsyncSpinner s(3);
+    s.start();
+    ros::Rate r(5);
+    while (ros::ok())
+    {
+    // PictureDealer picturedeal; 
+     ROS_INFO_STREAM("Main thread [" << boost::this_thread::get_id() << "].");
+    r.sleep();
+    } 
     return 0;  
 }  
 
