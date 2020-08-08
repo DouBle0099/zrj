@@ -20,6 +20,7 @@ int main(int argc, char** argv)
   
   image_transport::ImageTransport it(nh);
   image_transport::Publisher pub = it.advertise("OutImage", 1);
+  image_transport::Publisher pub1 = it.advertise("OutImage1", 1);
   sensor_msgs::ImagePtr msg; //= cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
   std::string pattern_jpg;
   std::vector<cv::String> image_files;
@@ -36,17 +37,18 @@ int main(int argc, char** argv)
     while (nh.ok()) 
     {
       cout << image_files[ii] << endl;
-      //cv::namedWindow("dd");
+      cv::namedWindow("dd");
       cv::Mat dd=imread(image_files[ii]);
-      //cv::imshow("dd",dd);
+      cv::imshow("dd",dd);
       cv::waitKey(50);
       ii++;
       msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", dd).toImageMsg();
       pub.publish(msg);
+      pub1.publish(msg);
       printf("msg has been pub\n");
       ros::spinOnce();
       loop_rate.sleep();
-      while(ii==5)
+      if (ii==5)
       {
         ii=0;
       }
