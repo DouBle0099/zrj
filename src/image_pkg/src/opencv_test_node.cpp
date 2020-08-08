@@ -21,7 +21,7 @@ int main(int argc, char** argv)
   image_transport::ImageTransport it(nh);
   image_transport::Publisher pub = it.advertise("OutImage", 1);
   image_transport::Publisher pub1 = it.advertise("OutImage1", 1);
-  sensor_msgs::ImagePtr msg; //= cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
+  sensor_msgs::ImagePtr msg; //= cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg(); 注释部分为另一种写法
   std::string pattern_jpg;
   std::vector<cv::String> image_files;
   

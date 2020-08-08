@@ -17,37 +17,26 @@ ros::Duration d(0.01);
 class PictureDealer
 {
     public: 
-        // PictureDealer()
-        // :it(n_)
-        // {
-        //     pub_ = it.advertise/*<sensor_msgs::ImagePtr>*/("SpinOutImage", 1);    
-        //     sub_ = it.subscribe("OutImage", 1, &PictureDealer::imageCallback, this);
-        //     sub_1 = it.subscribe("OutImage", 1, &PictureDealer::imageCallback1, this);
-        // }
         void imageCallback(const sensor_msgs::ImageConstPtr& msg)
         {
             try
             {
                 cv::Mat image=cv_bridge::toCvShare(msg, "bgr8")->image;
-                //cv::imshow("view", cv_bridge::toCvShare(msg, "bgr8")->image);
-                //cv::imshow("view",image);
                 cv::Mat dst;
-	            cv::Point center(image.cols/2,image.rows/2); //旋转中心
-	            double angle = -90.0;  //角度
+	            cv::Point center(image.cols/2,image.rows/2); //指定旋转中心点
+	            double angle = -90.0;  //旋转角度于此处修改
 	            double scale = 1.0;  //缩放系数
 	            cv::Mat rotMat = getRotationMatrix2D(center,angle,scale);
 	            warpAffine(image,dst,rotMat,image.size());
-                sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", dst).toImageMsg();
-                pub_.publish(msg);
-	            //cv::imshow("dst",dst);
+                sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", dst).toImageMsg();//转化为ros消息支持的msg类型
+                pub_.publish(msg);//此处规定发布消息
+	            //cv::imshow("dst",dst); //imshow被调用时，多线程会开起失败
                 cv::waitKey(1);
-                ROS_INFO_STREAM("Thread1 [thread=" << boost::this_thread::get_id() << "]");
             }
                 catch (cv_bridge::Exception& e)
             {
                 ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
             }
-            //d.sleep();
             ROS_INFO_STREAM("Thread1 [thread=" << boost::this_thread::get_id() << "]");
         }
         void imageCallback1(const sensor_msgs::ImageConstPtr& msg)
@@ -56,35 +45,27 @@ class PictureDealer
             ROS_INFO_STREAM("Thread2 [thread=" << boost::this_thread::get_id() << "]");
         }
      private:  
-    //    ros::NodeHandle n_; 
-    //    image_transport::ImageTransport it; 
           image_transport::Publisher pub_; 
-    //    image_transport::Subscriber sub_; 
-    //    image_transport::Subscriber sub_1;
 
 };
 int main(int argc, char **argv)  
 {  
     ros::init(argc, argv, "image_listener");   
-    ros::NodeHandle n_; //new
+    ros::NodeHandle n_; 
     image_transport::ImageTransport it(n_);
     PictureDealer picturedeal; 
-    image_transport::Subscriber sub_ = it.subscribe("OutImage", 1, &PictureDealer::imageCallback, &picturedeal);
-    image_transport::Subscriber sub_1 = it.subscribe("OutImage1", 1, &PictureDealer::imageCallback1, &picturedeal);
-    image_transport::Publisher pub_ = it.advertise/*<sensor_msgs::ImagePtr>*/("SpinOutImage", 1);
+    image_transport::Subscriber sub_ = it.subscribe("OutImage", 1, &PictureDealer::imageCallback, &picturedeal);//类外构造 订阅者1 独占一个线程
+    image_transport::Subscriber sub_1 = it.subscribe("OutImage1", 1, &PictureDealer::imageCallback1, &picturedeal);//订阅者2 独占一个线程
+    image_transport::Publisher pub_ = it.advertise/*<sensor_msgs::ImagePtr>*/("SpinOutImage", 1);//发布者于此处
     
-     ros::AsyncSpinner spinner(2); 
+     ros::AsyncSpinner spinner(2); //为节点指定两个线程
      spinner.start();
      ros::Rate loop_rate(22);
      while (ros::ok())
     {
         loop_rate.sleep();
     }
-    ros::waitForShutdown();    
-    // ros::AsyncSpinner s(4);  
-    // s.start();  
-    // ros::Rate r(5);  
-    //ros::spin();
+    ros::waitForShutdown();    //等待关闭
     return 0;  
 }  
 
@@ -93,39 +74,6 @@ int main(int argc, char **argv)
 
 
  
-// void imageCallback(const sensor_msgs::ImageConstPtr& msg)
-// {
-//   try
-//   {
-//     cv::Mat image=cv_bridge::toCvShare(msg, "bgr8")->image;
-//     //cv::imshow("view", cv_bridge::toCvShare(msg, "bgr8")->image);
-//     //cv::imshow("view",image);
-//     cv::Mat dst;
-// 	cv::Point center(image.cols/2,image.rows/2); //旋转中心
-// 	double angle = -90.0;  //角度
-// 	double scale = 1.0;  //缩放系数
-// 	cv::Mat rotMat = getRotationMatrix2D(center,angle,scale);
-// 	warpAffine(image,dst,rotMat,image.size());
-// 	cv::imshow("dst",dst);
-//     cv::waitKey(50);
-//   }
-//   catch (cv_bridge::Exception& e)
-//   {
-//     ROS_ERROR("Could not convert from '%s' to 'bgr8'.", msg->encoding.c_str());
-//   }
-// }
- 
-// int main(int argc, char **argv)
-// {
-//   ros::init(argc, argv, "image_listener");
-//   ros::NodeHandle nh;
-//   cv::namedWindow("view");
-//   cv::startWindowThread();
-//   image_transport::ImageTransport it(nh);
-//   image_transport::Subscriber sub = it.subscribe("OutImage", 1, imageCallback);
-//   //image_transport::Publisher pub = it.advertise("SpinOutImage", 1);
-//   ros::spin();
-//   cv::destroyWindow("view");
-// }
+
 
 
